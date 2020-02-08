@@ -54,7 +54,7 @@ ROOT_URLCONF = 'geodatatoolkit.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,'templates'),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,8 +75,12 @@ WSGI_APPLICATION = 'geodatatoolkit.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'd4sboi6172opf9',
+        'USER':'dssbcuwcqanxot',
+        'PASSWORD':'47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e',
+        'HOST':'ec2-54-246-89-234.eu-west-1.compute.amazonaws.com',
+         'PORT':'5432',
     }
 }
 
