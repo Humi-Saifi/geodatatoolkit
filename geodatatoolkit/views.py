@@ -25,3 +25,21 @@ def ApiSensor1(request):
     print(all_data)
     #return render(request,"sensors.html",{})
     return JsonResponse(all_data,safe=False)
+
+def ApiSensor2(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM gpsnn")
+        all_data=dictfetchall(cursor)
+    print(all_data)
+    #return render(request,"sensors.html",{})
+    return JsonResponse(all_data,safe=False)  
+
+def ApiSensor3(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM sensordata")
+        all_data=dictfetchall(cursor)
+    print(all_data)
+    #return render(request,"sensors.html",{})
+    return JsonResponse(all_data,safe=False)     

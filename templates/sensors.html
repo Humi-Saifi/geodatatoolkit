@@ -42,10 +42,7 @@
                     </div>
             </div>
             <div class="col">
-                <div class="card">
-                    Sensor 2
-                    <br/>
-                </div>
+             
             </div>
         </div>
         <div class="row">
@@ -53,12 +50,26 @@
                 <div class="card">
                     Sensor 3
                     <br/>
+                    <div class="chart-container">
+                        <canvas id="mycanvas3"></canvas>
+                      </div>                    
                 </div>
             </div>
             <div class="col">
                 <div class="card">
                     Sensor 4
                     <br/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    Sensor 2
+                    <br/>
+                    <div class="chart-container">
+                        <canvas id="mycanvas2"></canvas>
+                      </div>                    
                 </div>
             </div>
         </div>
@@ -108,6 +119,103 @@
                 console.log("ERROR");
                 console.log(data);
             });
+
+            $.get('/api/sensor/2').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var widths=[];
+                    var lengths=[];
+                    var gpstimes=[];
+                    for(var i=0;i<data.length;i++){
+                        widths.push(data[i].wide);
+                        lengths.push(data[i].lenght);
+                        gpstimes.push(data[i].GPStime);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                        {
+                                    label:"GPS time",
+                                    fill: true,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(211, 72, 54, 0.75)",
+                                    borderColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBackgroundColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBorderColor: "rgba(211, 72, 54, 1)",
+                                    data: gpstimes
+                                },
+                                {
+                                    label:"width",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(59, 89, 152, 0.75)",
+                                    borderColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBorderColor: "rgba(59, 89, 152, 1)",
+                                    data: widths
+                                },
+                                {
+                                    label:"length",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(29, 202, 255, 0.75)",
+                                    borderColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBackgroundColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBorderColor: "rgba(29, 202, 255, 1)",
+                                    data: lengths
+                                }
+                             
+                        ]
+                    };
+                    var ctx = $("#mycanvas2");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });
+
+        $.get('/api/sensor/3').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var values=[];
+                    for(var i=0;i<data.length;i++){
+                        values.push(data[i].value);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                                {
+                                    label:"Sensor 3",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(29, 202, 255, 0.75)",
+                                    borderColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBackgroundColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBorderColor: "rgba(29, 202, 255, 1)",
+                                    data: values
+                                }
+                        ]
+                    };
+                    var ctx = $("#mycanvas3");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });                        
 
     });
         
