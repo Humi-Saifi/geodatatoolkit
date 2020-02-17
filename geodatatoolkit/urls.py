@@ -24,4 +24,7 @@ urlpatterns = [
     path('api/sensor/1',views.ApiSensor1),
     path('api/sensor/2',views.ApiSensor2),
     path('api/sensor/3',views.ApiSensor3),
+    path('api/com/port',views.runComPort),
+    path('dashboard',views.dashboard),
+
 ]

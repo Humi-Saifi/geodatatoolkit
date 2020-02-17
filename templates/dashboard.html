@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        .chart-container {
+          width: 100%;
+          height: auto;
+        }
+      </style>
+    <title>GeoDataToolkit :: Dashboard</title>
+  </head>
+  <body>
+    <div class="jumbotron">
+        <h1 class="display-4">GeoDataToolkit</h1>
+        <p class="lead">
+            This is a project for plotting sensors data in real-time.
+        </p>
+      </div>
+       <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <p><h4>Sensor Selection</h4></p>
+                        <!--<form>
+                            <p>
+                                <select id="com_port" name="com_port">
+                                    <option value="COM4">COM4</option>
+                                    <option value="COM3">COM3</option>
+                                    <option value="COM10">COM10</option>
+                                </select>
+                                &nbsp;&nbsp;
+                                <input type="button" id="btnCOMPORT" value="submit"/>
+                            </p>
+                        </form>-->
+                        <hr/>
+                        <form>
+                            <table width="100%">
+                                {% csrf_token %}
+                                <tr>
+                                    <td>Baudrate</td>
+                                    <td><input type="text" id="baudrate"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Bytesize</td>
+                                    <td><input type="text" id="bytesize"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Parity</td>
+                                    <td><input type="text" id="parity"/></td>
+                                </tr>                                                                
+                                <tr>
+                                    <td>COM</td>
+                                    <td><input type="text" id="com"/></td>
+                                </tr>  
+                                <tr>
+                                    <td></td>
+                                    <td><input type="button" id="btn" value="submit" />&nbsp;<input type="button" id="deconnect" value="deconnect" /></td>
+                                </tr>                                                              
+                            </table>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="chart-container" class="chart-container">
+                                <canvas id="mycanvas"></canvas>
+                              </div>
+                        </div>
+                    </div>
+            </div>
+
+       </div> 
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script type="text/JavaScript">
+            $(document).ready(function(){
+
+                        function displaySensor1(){
+                            $.get('/api/sensor/1').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var values=[];
+                    for(var i=0;i<data.length;i++){
+                        values.push(data[i].value);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                                {
+                                    label:"Sensor 1",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(29, 202, 255, 0.75)",
+                                    borderColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBackgroundColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBorderColor: "rgba(29, 202, 255, 1)",
+                                    data: values
+                                }
+                        ]
+                    };
+                    var ctx = $("#mycanvas");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+                    $('#chart-container').show();
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });
+
+                        }
+
+                        function displaySensor2(){
+                            $.get('/api/sensor/2').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var widths=[];
+                    var lengths=[];
+                    var gpstimes=[];
+                    for(var i=0;i<data.length;i++){
+                        widths.push(data[i].wide);
+                        lengths.push(data[i].lenght);
+                        gpstimes.push(data[i].GPStime);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                        {
+                                    label:"GPS time",
+                                    fill: true,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(211, 72, 54, 0.75)",
+                                    borderColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBackgroundColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBorderColor: "rgba(211, 72, 54, 1)",
+                                    data: gpstimes
+                                },
+                                {
+                                    label:"width",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(59, 89, 152, 0.75)",
+                                    borderColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBorderColor: "rgba(59, 89, 152, 1)",
+                                    data: widths
+                                },
+                                {
+                                    label:"length",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(29, 202, 255, 0.75)",
+                                    borderColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBackgroundColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBorderColor: "rgba(29, 202, 255, 1)",
+                                    data: lengths
+                                }
+                             
+                        ]
+                    };
+                    var ctx = $("#mycanvas");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+                    $('#chart-container').show();
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });
+
+                        }
+
+            function displaySensor3(){
+                            $.get('/api/sensor/3').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var values=[];
+                    for(var i=0;i<data.length;i++){
+                        values.push(data[i].value);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                                {
+                                    label:"Sensor 3",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(29, 202, 255, 0.75)",
+                                    borderColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBackgroundColor: "rgba(29, 202, 255, 1)",
+                                    pointHoverBorderColor: "rgba(29, 202, 255, 1)",
+                                    data: values
+                                }
+                        ]
+                    };
+
+                    var ctx = $("#mycanvas");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+                    $('#chart-container').show();
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });                        
+
+
+                        }
+
+                    $('#deconnect').attr("disabled",true);
+                    $('#deconnect').click(function(){
+                        $('#btn').attr("disabled",false);
+                        $('#deconnect').attr("disabled",true);
+                        $('#chart-container').hide();
+                        var canvas=document.getElementById('mycanvas');
+
+                        const context = canvas.getContext('2d');
+
+                        context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        location.reload();
+                    });
+                    $('#btnCOMPORT').click(function(){
+
+                    });
+                    $('#btn').click(function(){
+                                var post_data={
+                                    com_port:$('#com').val(),
+                                    baudrate:$('#baudrate').val(),
+                                    parity:$('#parity').val(),
+                                    bytesize:$('#bytesize').val(),
+                                    csrfmiddlewaretoken:$("input[name='csrfmiddlewaretoken']").val()
+
+                                };
+                                console.log(post_data);
+                                $.post('/api/com/port',post_data).done(function(data){
+                                    $('#deconnect').attr("disabled",false);
+                                    $('#btn').attr("disabled",true);
+                                        console.log('success');
+                                        console.log(data);
+                                        switch(parseInt(data.sensor_id)){
+                                            case 1:
+                                                        displaySensor1();
+                                                        break;
+                                            case 2:
+                                                        displaySensor2();
+                                                        break;
+                                            case 3:
+                                                        displaySensor3();        
+                                                        break;
+                                            default: console.log('not available');
+                                                        break;
+                                        }
+                                }).fail(function(err){
+                                    console.log('error');
+                                    console.log(err);
+                                });
+                    });
+            });
+    </script>
+  </body>
+</html>
