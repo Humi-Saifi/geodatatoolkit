@@ -27,17 +27,22 @@
                 <div class="card">
                     <div class="card-body">
                         <p><h4>Sensor Selection</h4></p>
-                        <!--<form>
+                        <form>
                             <p>
-                                <select id="com_port" name="com_port">
-                                    <option value="COM4">COM4</option>
-                                    <option value="COM3">COM3</option>
-                                    <option value="COM10">COM10</option>
+                                Sensor&nbsp;:&nbsp;<select id="sensor" name="sensor">
+                                    <option value="TEMP">TEMPERATURE</option>
+                                    <option value="GPSNN">GPSNN SENSOR</option>
+                                    <option value="DISTO">DISTO SENSOR</option>
+                                    <option value="SYLVAC">SYLVAC SENSOR</option>
+                                    <option value="NEVIL">NEVIL SENSOR</option>
+                                    
                                 </select>
                                 &nbsp;&nbsp;
-                                <input type="button" id="btnCOMPORT" value="submit"/>
+                                <input type="button" id="btnSensor" value="select"/>
+                                &nbsp;
+                                <input type="button" id="btnSensorChange" value="change"/>
                             </p>
-                        </form>-->
+                        </form>
                         <hr/>
                         <form>
                             <table width="100%">
@@ -48,11 +53,27 @@
                                 </tr>
                                 <tr>
                                     <td>Bytesize</td>
-                                    <td><input type="text" id="bytesize"/></td>
+                                    <td>
+                                        <select id="bytesize" name="bytesize">
+                                            <option value="5">5 bits</option>
+                                            <option value="6">6 bits</option>
+                                            <option value="7">7 bits</option>
+                                            <option value="8">8 bits</option>
+                                        </select>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Parity</td>
-                                    <td><input type="text" id="parity"/></td>
+                                    <td>
+                                        <select id="parity" name="parity">
+                                            <option value="0">NONE</option>
+                                            <option value="1">ODD</option>
+                                            <option value="2">EVEN</option>
+                                            <option value="3">MARK</option>
+                                            <option value="4">SPACE</option>
+                                        </select>
+                                    
+                                    </td>
                                 </tr>                                                                
                                 <tr>
                                     <td>COM</td>
@@ -88,9 +109,12 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script type="text/JavaScript">
+    var sylvacInterval=null;
+    var distoInterval=null;
+    var gpsnnInterval=null;
             $(document).ready(function(){
 
-                        function displaySensor1(){
+            function displaySensor1(){
                             $.get('/api/sensor/1').done(function(data){
                     console.log(data);
                     var dates=[];
@@ -128,9 +152,9 @@
                 console.log(data);
             });
 
-                        }
+        }
 
-                        function displaySensor2(){
+        function displaySensor2(){
                             $.get('/api/sensor/2').done(function(data){
                     console.log(data);
                     var dates=[];
@@ -193,9 +217,9 @@
                 console.log(data);
             });
 
-                        }
+        }
 
-            function displaySensor3(){
+        function displaySensor3(){
                             $.get('/api/sensor/3').done(function(data){
                     console.log(data);
                     var dates=[];
@@ -235,13 +259,33 @@
             });                        
 
 
-                        }
+        }
 
                     $('#deconnect').attr("disabled",true);
+                    $('#btnSensorChange').attr("disabled",true);
+                    $('#com').attr("disabled",true);
+                    $('#baudrate').attr("disabled",true);
+                    $('#parity').attr("disabled",true);
+                    $('#bytesize').attr("disabled",true);
+
+
                     $('#deconnect').click(function(){
                         $('#btn').attr("disabled",false);
                         $('#deconnect').attr("disabled",true);
+                        var post_data={
+                            sensor:$('#sensor').val(), 
+                            csrfmiddlewaretoken:$("input[name='csrfmiddlewaretoken']").val()
+                        };
+                        $.post('/api/deconnect',post_data).done(function(data){
+                            console.log(data);
+
+                        }).fail(function(err){
+                            console.log(err);
+                        });
                         $('#chart-container').hide();
+                        clearInterval(sylvacInterval);
+                        clearInterval(distoInterval);
+                        clearInterval(gpsnnInterval);
                         var canvas=document.getElementById('mycanvas');
 
                         const context = canvas.getContext('2d');
@@ -249,11 +293,62 @@
                         context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
                         location.reload();
                     });
-                    $('#btnCOMPORT').click(function(){
 
+
+                    $('#btnSensor').click(function(){
+                                $('#sensor').attr('disabled',true);
+                                $('#btnSensor').attr('disabled',true);
+                                $('#btnSensorChange').attr('disabled',false);
+                                $('#com').attr("disabled",false);
+                                $('#baudrate').attr("disabled",false);
+                                $('#parity').attr("disabled",false);
+                                $('#bytesize').attr("disabled",false);
+                                switch($('#sensor').val()){
+                                    case 'TEMP':console.log('Not applicable');   
+                                                break;
+                                    case 'GPSNN':
+                                                $('#com').val(' ');
+                                                $('#baudrate').val('115200');
+                                                $('#parity').val('0');
+                                                $('#bytesize').val('8');
+                                                break;
+                                    case 'DISTO':
+                                                $('#com').val(' ');
+                                                $('#baudrate').val('9600');
+                                                $('#parity').val('0');
+                                                $('#bytesize').val('8');
+                                                break;
+                                    case 'SYLVAC':
+                                                $('#com').val(' ');
+                                                $('#baudrate').val('4800');
+                                                $('#parity').val('2');
+                                                $('#bytesize').val('7');
+                                                break;
+                                    case 'NEVIL':console.log('Not applicable');
+                                                break;
+                                    default:console.log('Not applicable');
+                                            break;
+                                }
+                    });
+
+
+                    $('#btnSensorChange').click(function(){
+                        $('#sensor').attr('disabled',false);
+                        $('#btnSensor').attr('disabled',false);
+                        $('#btnSensorChange').attr('disabled',true);
+                        $('#com').attr("disabled",true);
+                        $('#baudrate').attr("disabled",true);
+                        $('#parity').attr("disabled",true);
+                        $('#bytesize').attr("disabled",true);
+                        $('#com').val(' ');
+                        $('#baudrate').val(' ');
+                        $('#parity').val(' ');
+                        $('#bytesize').val(' ');
+                        $('#chart-container').hide();
                     });
                     $('#btn').click(function(){
                                 var post_data={
+                                    sensor:$('#sensor').val(),
                                     com_port:$('#com').val(),
                                     baudrate:$('#baudrate').val(),
                                     parity:$('#parity').val(),
@@ -267,15 +362,15 @@
                                     $('#btn').attr("disabled",true);
                                         console.log('success');
                                         console.log(data);
-                                        switch(parseInt(data.sensor_id)){
-                                            case 1:
+                                        switch(data.sensor_id){
+                                            case "SYLVAC":
+                                                        displaySensor3();
+                                                        break;
+                                            case "DISTO":
                                                         displaySensor1();
                                                         break;
-                                            case 2:
-                                                        displaySensor2();
-                                                        break;
-                                            case 3:
-                                                        displaySensor3();        
+                                            case "GPSNN":
+                                                        displaySensor2();        
                                                         break;
                                             default: console.log('not available');
                                                         break;
@@ -284,6 +379,27 @@
                                     console.log('error');
                                     console.log(err);
                                 });
+                                $('#deconnect').attr("disabled",false);
+                                $('#btn').attr("disabled",true);
+                                switch($('#sensor').val()){
+                                            case "SYLVAC":
+                                                        sylvacInterval=setInterval(() => {
+                                                            displaySensor3();
+                                                        }, 1500);
+                                                        break;
+                                            case "DISTO":
+                                                        distoInterval=setInterval(() => {
+                                                            displaySensor1();
+                                                        }, 1500);
+                                                        break;
+                                            case "GPSNN":
+                                                        gpsnnInterval= setInterval(() => {
+                                                            displaySensor2();        
+                                                        }, 1500); 
+                                                        break;
+                                            default: console.log('not available');
+                                                        break;
+                                }
                     });
             });
     </script>
