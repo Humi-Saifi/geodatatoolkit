@@ -161,6 +161,13 @@ def runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity):
                     sylvac_status_read=open(sylvac_status_file,"r")
                     status=int(sylvac_status_read.read())
                     sylvac_status_read.close()
+                    if status==0:
+                        cursor_local.close()
+                        cursor_remote.close()
+                        conn_local.close()
+                        conn_remote.close()
+                        datei.close()
+                        return JsonResponse({"data":"sylvac task completed"},safe=False)  
                 print("SYLVAC COMPLETED TASK")
             datei.close()
     
@@ -258,6 +265,13 @@ def runDISTO(requet,sensor,com_port,baudrate,bytesize,parity):
                     disto_status_read=open(disto_status_file,"r")
                     status=int(disto_status_read.read())
                     disto_status_read.close()
+                    if status==0:
+                        cursor_local.close()
+                        cursor_remote.close()
+                        conn_local.close()
+                        conn_remote.close()
+                        datei.close()
+                        return JsonResponse({"data":"disto task completed"},safe=False)  
                 print('STOPPING DISTO')
                 datei.close()
 
@@ -276,7 +290,113 @@ def stopDISTO(request):
     return JsonResponse({"data": True},safe=False)
 
 def runGPSNN(request,sensor,com_port,baudrate,bytesize,parity):
-    pass
+    port=com_port
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
+    cursor_local=conn_local.cursor()
+    cursor_remote=conn_remote.cursor()
+    ser = serial.Serial(port=com_port,
+                        baudrate=int(baudrate),
+                        bytesize=getByteSize(int(bytesize)),
+                        parity=getParity(int(parity)),
+                        timeout=200)
+
+  
+    
+    if sensor=='GPSNN':
+        a = 0
+        i = 0
+        # m = float (input('Laenge einer Datei in Minuten:'))
+        # n = int (input('Anzahl der Dateien: '))
+        # p = m*60
+
+        n = 200
+        nn = 1
+
+
+        while a < nn:
+            a = 0
+            d = str(datetime.today())
+            z = d.split(" ")
+            da = z[0]
+            date = da.split("-")
+            jahr = date[0]
+            monat = date[1]
+            tag = date[2]
+            datum = jahr + monat + tag
+            ti = z[1]
+            time_ = ti.split(":")
+            hh = time_[0]
+            mm = time_[1]
+            ss = time_[2]
+            ss = int(float(ss))
+            if ss < 10:
+                ss = '0' + str(ss)
+                zeit = hh + mm + ss
+            else:
+                zeit = hh + mm + str(ss)
+            name = 'D:/Neuer Ordner (2)/data/PPython' + 'gnss' + datum + zeit + '.txt'
+            print(name)
+            datei = open(name, "w")
+
+            print(n)
+            print(a)
+            gpsnn_status_file="gpsnn_status.txt"
+            gpsnn_status=open(gpsnn_status_file,"w")
+            gpsnn_status.write('1')
+            gpsnn_status.close()
+            status=1
+            while status==1:
+
+                # ser.write(b"%R1Q,2107:0\r\n")
+                # ser.write(b"%R1Q,2003:0\r\n")
+                # ser.write(b"?\r")
+
+                line = ser.readline()  # lese eine Zeile aus dem seriellen Port
+                # print (line)
+                zeile = str(line)
+                # print (zeile[3:8])
+                if zeile[3:8] == "GNGLL":
+                    t = time.time()
+
+                    print('############')
+                    print('%10.4f' % t)
+                    print(zeile[9:45])
+
+                    datei.write('%10.4f' % t + ' ' + zeile[9:45] + '\n')  # schreiben in eine Datei
+
+                    my_string = zeile[9:45]
+                    result = [x.strip() for x in my_string.split(',')]
+
+                    
+                    sql = "INSERT INTO gpsnn (date, wide, lenght, GPStime) VALUES (%s, %s, %s, %s)"
+                    sql2 = "INSERT INTO gpsnn(wide,lenght,GPStime) VALUES(%s,%s,%s)" %(result[0],result[2],result[4])
+                    val = ('%10.4f' % t, result[0], result[2], result[4])
+                    cursor_local.execute(sql2)        
+                    cursor_remote.execute(sql2)
+                    conn_local.commit()
+                    conn_remote.commit()
+
+                    print("record inserted in disto table.")
+                    gpsnn_status_read=open(gpsnn_status_file,"r")
+                    status=int(gpsnn_status_read.read())
+                    gpsnn_status_read.close()
+                    if status==0:
+                        cursor_local.close()
+                        cursor_remote.close()
+                        conn_local.close()
+                        conn_remote.close()
+                        datei.close()
+                        return JsonResponse({"data":"gpsnn task completed"},safe=False)                
+
+            print('STOPPING GPSNN')
+            datei.close()
+        cursor_local.close()
+        cursor_remote.close()
+        conn_local.close()
+        conn_remote.close()
+        return JsonResponse({"data":"gpsnn task completed"},safe=False)                       
+    
 
 def stopGPSNN(request):
     gpsnn_status_file="gpsnn_status.txt"
