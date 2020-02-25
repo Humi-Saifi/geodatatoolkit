@@ -25,30 +25,60 @@ def sensorData(request):
 
 def ApiSensor1(request):
     all_data=None
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM disto")
-        all_data=dictfetchall(cursor)
+    #with connection.cursor() as cursor:
+    #    cursor.execute("SELECT * FROM disto")
+    #    all_data=dictfetchall(cursor)
     #print(all_data)
     #return render(request,"sensors.html",{})
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    cursor_local=conn_local.cursor()
+    sql="SELECT * FROM disto"
+    cursor_local.execute(sql)
+    all_data=dictfetchall(cursor_local)
     return JsonResponse(all_data,safe=False)
+
 
 def ApiSensor2(request):
     all_data=None
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM gpsnn")
-        all_data=dictfetchall(cursor)
+    #with connection.cursor() as cursor:
+    #    cursor.execute("SELECT * FROM gpsnn")
+    #    all_data=dictfetchall(cursor)
     #print(all_data)
     #return render(request,"sensors.html",{})
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    cursor_local=conn_local.cursor()
+    sql="SELECT * FROM gpsnn"
+    cursor_local.execute(sql)
+    all_data=dictfetchall(cursor_local)    
     return JsonResponse(all_data,safe=False)  
 
 def ApiSensor3(request):
     all_data=None
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM sensordata")
-        all_data=dictfetchall(cursor)
+    #with connection.cursor() as cursor:
+    #    cursor.execute("SELECT * FROM sensordata")
+    #    all_data=dictfetchall(cursor)
     #print(all_data)
     #return render(request,"sensors.html",{})
-    return JsonResponse(all_data,safe=False)     
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    cursor_local=conn_local.cursor()
+    sql="SELECT * FROM sensordata"
+    cursor_local.execute(sql)
+    all_data=dictfetchall(cursor_local)
+    return JsonResponse(all_data,safe=False)
+
+def ApiSensor4(request):
+    all_data=None
+    #with connection.cursor() as cursor:
+    #    cursor.execute("SELECT * FROM disto")
+    #    all_data=dictfetchall(cursor)
+    #print(all_data)
+    #return render(request,"sensors.html",{})
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    cursor_local=conn_local.cursor()
+    sql="SELECT * FROM dxl"
+    cursor_local.execute(sql)
+    all_data=dictfetchall(cursor_local)
+    return JsonResponse(all_data,safe=False)
 
 
 def getByteSize(bytesize):
@@ -74,14 +104,129 @@ def getParity(parity):
         return serial.PARITY_SPACE
 
 
-def runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity):
+def runDXL(request,sensor,com_port,baudrate,bytesize,parity,isInternet):
+    conn_remote= None
+    cursor_remote=None
+    conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
+    if isInternet:
+        conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
+    cursor_local=conn_local.cursor()
+    if isInternet:
+        cursor_remote=conn_remote.cursor()
+    if sensor=='DXL':
+        a = 0
+        i = 0
+        n=3
+        nn=1
+
+        ser = serial.Serial(port=com_port,
+                        baudrate=int(baudrate),
+                         bytesize=getByteSize(int(bytesize)),
+                         parity=getParity(int(parity)),
+                         timeout=200)
+
+        while a < nn:
+            a=0
+            d=str(datetime.today())
+            z = d.split(" ")
+            da = z[0]
+            date = da.split("-")
+            jahr = date[0]
+            monat = date[1]
+            tag = date[2]
+            datum=jahr+monat+tag
+            ti = z[1]
+            time_ = ti.split(":")
+            hh = time_[0]
+            mm = time_[1]
+            ss = time_[2]
+            ss = int (float(ss))
+            if ss<10:
+                ss = '0'+ str(ss)
+                zeit =hh+mm+ss
+            else:
+                zeit = hh + mm + str(ss)
+            name = 'D:/Neuer Ordner (2)/data/PPython' + 'dxl' + datum + zeit + '.txt'
+            #filename = name
+            print(name)
+            datei = open(name, "w")
+            dxl_status_file="dxl_status.txt"
+            dxl_status=open(dxl_status_file,"w")
+            dxl_status.write('1')
+            dxl_status.close()
+            status=1
+            while status==1:
+                #ser.write(b"%R1Q,2107:0\r\n")
+                #ser.write(b"%R1Q,2003:0\r\n")
+                ser.write(b"g\r\n")
+
+                line = ser.readline(24)   # lese eine Zeile aus dem seriellen Port 24
+                zeile = str(line)
+                valuex=zeile[4:8]
+                valuey=zeile[9:14]
+                print (zeile)
+                t = time.time ()
+                datei.write('%10.2f'%t+' '+valuex+''+valuey+'\n')#write to a file 9,20
+                print('%1.3f'%t)
+                time.sleep(1)
+                a += 1
+                sql2 = "INSERT INTO dxl(x,y) VALUES (%s,%s)" %(valuex,valuey)
+                cursor_local.execute(sql2)
+                if isInternet:        
+                    cursor_remote.execute(sql2)
+                conn_local.commit()
+                if isInternet:
+                    conn_remote.commit()
+                print("record inserted in dxl table.")
+                dxl_status_read=open(dxl_status_file,"r")
+                status=int(dxl_status_read.read())
+                dxl_status_read.close()
+            
+                if status==0:
+                    cursor_local.close()
+                    if isInternet:
+                        cursor_remote.close()
+                    conn_local.close()
+                    if isInternet:
+                        conn_remote.close()
+                    datei.close()
+                    return JsonResponse({"data":"dxl task completed"},safe=False) 
+            
+            datei.close()
+
+    cursor_local.close()
+    if isInternet:
+        cursor_remote.close()
+    conn_local.close()
+    if isInternet:
+        conn_remote.close()
+    return JsonResponse({"data": "dxl task complete"},safe=False)
+
+    
+
+
+
+def stopDXL(request):
+    dxl_status_file="dxl_status.txt"
+    dxl_status=open(dxl_status_file,"w")
+    dxl_status.write('0')
+    dxl_status.close()
+    print("STOPPING DXL")
+    return JsonResponse({"data": True},safe=False)    
+
+
+def runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity,isInternet):
     port=com_port
     request.COOKIES["sylvac"]=True
     globals.request.COOKIES["sylvac"]=True
+    conn_remote= None
+    cursor_remote=None
     conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
-    conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
+    if isInternet:
+        conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
     cursor_local=conn_local.cursor()
-    cursor_remote=conn_remote.cursor()
+    if isInternet:
+        cursor_remote=conn_remote.cursor()
     if sensor=='SYLVAC':
         ser = serial.Serial(port=com_port,
                         baudrate=int(baudrate),
@@ -153,28 +298,34 @@ def runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity):
                     a += 1
                     print(zeile[2:10])
                     sql2 = "INSERT INTO sensordata (value) VALUES (%s)" %(zeile[2:10])
-                    cursor_local.execute(sql2)        
-                    cursor_remote.execute(sql2)
+                    cursor_local.execute(sql2)
+                    if isInternet:        
+                        cursor_remote.execute(sql2)
                     conn_local.commit()
-                    conn_remote.commit()
+                    if isInternet:
+                        conn_remote.commit()
                     print("record inserted in sensordata table.")
                     sylvac_status_read=open(sylvac_status_file,"r")
                     status=int(sylvac_status_read.read())
                     sylvac_status_read.close()
                     if status==0:
                         cursor_local.close()
-                        cursor_remote.close()
+                        if isInternet:
+                            cursor_remote.close()
                         conn_local.close()
-                        conn_remote.close()
+                        if isInternet:
+                            conn_remote.close()
                         datei.close()
                         return JsonResponse({"data":"sylvac task completed"},safe=False)  
                 print("SYLVAC COMPLETED TASK")
             datei.close()
     
     cursor_local.close()
-    cursor_remote.close()
+    if isInternet:
+        cursor_remote.close()
     conn_local.close()
-    conn_remote.close()
+    if isInternet:
+        conn_remote.close()
     return JsonResponse({"data": "sylvac task complete"},safe=False)
 
 
@@ -187,12 +338,16 @@ def stopSYLVAC(request):
     return JsonResponse({"data": True},safe=False)
 
 
-def runDISTO(requet,sensor,com_port,baudrate,bytesize,parity):
+def runDISTO(requet,sensor,com_port,baudrate,bytesize,parity,isInternet):
     port=com_port
+    conn_remote=None
+    cursor_remote=None
     conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
-    conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
+    if isInternet:
+        conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
     cursor_local=conn_local.cursor()
-    cursor_remote=conn_remote.cursor()
+    if isInternet:
+        cursor_remote=conn_remote.cursor()
     ser = serial.Serial(port=com_port,
                         baudrate=int(baudrate),
                         bytesize=getByteSize(int(bytesize)),
@@ -256,10 +411,12 @@ def runDISTO(requet,sensor,com_port,baudrate,bytesize,parity):
                     #val = ('%10.3f'% t, zeile[9:17])
                     #cur.execute(sql, val)
                     #conn.commit()
-                    cursor_local.execute(sql2)        
-                    cursor_remote.execute(sql2)
+                    cursor_local.execute(sql2)
+                    if isInternet:        
+                        cursor_remote.execute(sql2)
                     conn_local.commit()
-                    conn_remote.commit()
+                    if isInternet:
+                        conn_remote.commit()
 
                     print("record inserted in disto table.")
                     disto_status_read=open(disto_status_file,"r")
@@ -267,18 +424,22 @@ def runDISTO(requet,sensor,com_port,baudrate,bytesize,parity):
                     disto_status_read.close()
                     if status==0:
                         cursor_local.close()
-                        cursor_remote.close()
+                        if isInternet:
+                            cursor_remote.close()
                         conn_local.close()
-                        conn_remote.close()
+                        if isInternet:
+                            conn_remote.close()
                         datei.close()
                         return JsonResponse({"data":"disto task completed"},safe=False)  
                 print('STOPPING DISTO')
                 datei.close()
 
         cursor_local.close()
-        cursor_remote.close()
+        if isInternet:
+            cursor_remote.close()
         conn_local.close()
-        conn_remote.close()
+        if isInternet:
+            conn_remote.close()
         return JsonResponse({"data":"disto task completed"},safe=False)      
 
 def stopDISTO(request):
@@ -289,8 +450,10 @@ def stopDISTO(request):
     print("STOPPING DISTO")
     return JsonResponse({"data": True},safe=False)
 
-def runGPSNN(request,sensor,com_port,baudrate,bytesize,parity):
+def runGPSNN(request,sensor,com_port,baudrate,bytesize,parity,isInternet):
     port=com_port
+    conn_remote=None
+    cursor_remote=None
     conn_local=psycopg2.connect(user="postgres",password="postgres",host="localhost",port="5432",database="sensors")
     conn_remote=psycopg2.connect(user="dssbcuwcqanxot",password="47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e",host="ec2-54-246-89-234.eu-west-1.compute.amazonaws.com",port="5432",database="d4sboi6172opf9")
     cursor_local=conn_local.cursor()
@@ -372,10 +535,12 @@ def runGPSNN(request,sensor,com_port,baudrate,bytesize,parity):
                     sql = "INSERT INTO gpsnn (date, wide, lenght, GPStime) VALUES (%s, %s, %s, %s)"
                     sql2 = "INSERT INTO gpsnn(wide,lenght,GPStime) VALUES(%s,%s,%s)" %(result[0],result[2],result[4])
                     val = ('%10.4f' % t, result[0], result[2], result[4])
-                    cursor_local.execute(sql2)        
-                    cursor_remote.execute(sql2)
+                    cursor_local.execute(sql2)
+                    if isInternet:        
+                        cursor_remote.execute(sql2)
                     conn_local.commit()
-                    conn_remote.commit()
+                    if isInternet:
+                        conn_remote.commit()
 
                     print("record inserted in disto table.")
                     gpsnn_status_read=open(gpsnn_status_file,"r")
@@ -383,18 +548,22 @@ def runGPSNN(request,sensor,com_port,baudrate,bytesize,parity):
                     gpsnn_status_read.close()
                     if status==0:
                         cursor_local.close()
-                        cursor_remote.close()
+                        if isInternet:
+                            cursor_remote.close()
                         conn_local.close()
-                        conn_remote.close()
+                        if isInternet:
+                            conn_remote.close()
                         datei.close()
                         return JsonResponse({"data":"gpsnn task completed"},safe=False)                
 
             print('STOPPING GPSNN')
             datei.close()
         cursor_local.close()
-        cursor_remote.close()
+        if isInternet:
+            cursor_remote.close()
         conn_local.close()
-        conn_remote.close()
+        if isInternet:
+            conn_remote.close()
         return JsonResponse({"data":"gpsnn task completed"},safe=False)                       
     
 
@@ -418,6 +587,9 @@ def deconnect(request):
     elif sensor=='GPSNN':
         print('STOP GPSNN')
         stopGPSNN(request)
+    elif sensor=='DXL':
+        print('STOP DXL')
+        stopDXL(request)
 
 async def AsyncResponse(request,sensor):
     time.sleep(5)
@@ -430,16 +602,20 @@ def runComPort(request):
     baudrate=request.POST['baudrate']
     parity=request.POST['parity']
     bytesize=request.POST['bytesize']
+    isInternet=int(request.POST['isInternet'])
     port=com_port
+    if sensor=='DXL':
+        print('running DXL')
+        runDXL(request,sensor,com_port,baudrate,bytesize,parity,isInternet)
     if sensor=='SYLVAC':
         print('running SYLVAC')
-        runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity)
+        runSYLVAC(request,sensor,com_port,baudrate,bytesize,parity,isInternet)
     elif sensor=='DISTO':
         print('running DISTO')
-        runDISTO(request,sensor,com_port,baudrate,bytesize,parity)
+        runDISTO(request,sensor,com_port,baudrate,bytesize,parity,isInternet)
     elif sensor=='GPSNN':
         print('running GPSNN')
-        runGPSNN(request,sensor,com_port,baudrate,bytesize,parity)
+        runGPSNN(request,sensor,com_port,baudrate,bytesize,parity,isInternet)
 
     
     

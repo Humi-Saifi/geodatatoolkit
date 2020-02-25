@@ -13,11 +13,13 @@
           height: auto;
         }
       </style>
-    <title>GeoDataToolkit :: Dashboard</title>
+    <title>AD-HOC Monitoring System :: Dashboard</title>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div class="jumbotron">
-        <h1 class="display-4">GeoDataToolkit</h1>
+        <h3 class="display-7">AD-HOC Monitoring System for Geodetic Sensors </h3>
+        <img src="pic.png/" style="display: black; margin-left: auto; margin-right: auto;" />
         <p class="lead">
             This is a project for plotting sensors data in real-time.
         </p>
@@ -30,17 +32,20 @@
                         <form>
                             <p>
                                 Sensor&nbsp;:&nbsp;<select id="sensor" name="sensor">
-                                    <option value="TEMP">TEMPERATURE</option>
-                                    <option value="GPSNN">GPSNN SENSOR</option>
-                                    <option value="DISTO">DISTO SENSOR</option>
                                     <option value="SYLVAC">SYLVAC SENSOR</option>
-                                    <option value="NEVIL">NEVIL SENSOR</option>
+                                    <option value="DISTO">DISTO SENSOR</option>
+                                    <option value="DXL">DXL 360</option>
+                                    <option value="GPSNN">GPSNN SENSOR</option>
+                                    
+                                    
+                                    
                                     
                                 </select>
                                 &nbsp;&nbsp;
                                 <input type="button" id="btnSensor" value="select"/>
                                 &nbsp;
                                 <input type="button" id="btnSensorChange" value="change"/>
+                                <input type="checkbox" id="IsInternet" /> Save In CLOUD
                             </p>
                         </form>
                         <hr/>
@@ -112,6 +117,7 @@
     var sylvacInterval=null;
     var distoInterval=null;
     var gpsnnInterval=null;
+    var dxlInterval=null;
             $(document).ready(function(){
 
             function displaySensor1(){
@@ -261,6 +267,62 @@
 
         }
 
+        function displaySensor4(){
+                            $.get('/api/sensor/4').done(function(data){
+                    console.log(data);
+                    var dates=[];
+                    var xs=[];
+                    var ys=[];
+                    
+                    for(var i=0;i<data.length;i++){
+                        xs.push(data[i].x);
+                        ys.push(data[i].y);
+                        dates.push(data[i].date);    
+                    }
+
+                    var chartdata={
+                        labels:dates,
+                        datasets:[
+                        {
+                                    label:"X",
+                                    fill: true,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(211, 72, 54, 0.75)",
+                                    borderColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBackgroundColor: "rgba(211, 72, 54, 1)",
+                                    pointHoverBorderColor: "rgba(211, 72, 54, 1)",
+                                    data: xs
+                                },
+                                {
+                                    label:"Y",
+                                    fill: false,
+                                    lineTension: 0.1,
+                                    backgroundColor: "rgba(59, 89, 152, 0.75)",
+                                    borderColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+                                    pointHoverBorderColor: "rgba(59, 89, 152, 1)",
+                                    data: ys
+                                }
+                             
+                        ]
+                    };
+                    var ctx = $("#mycanvas");
+
+                    var LineGraph = new Chart(ctx, {
+                        type: 'line',
+                        data: chartdata
+                    });
+                    $('#chart-container').show();
+
+        }).fail(function(data){
+                console.log("ERROR");
+                console.log(data);
+            });
+
+        }        
+
+        
+
                     $('#deconnect').attr("disabled",true);
                     $('#btnSensorChange').attr("disabled",true);
                     $('#com').attr("disabled",true);
@@ -286,6 +348,7 @@
                         clearInterval(sylvacInterval);
                         clearInterval(distoInterval);
                         clearInterval(gpsnnInterval);
+                        clearInterval(dxlInterval);
                         var canvas=document.getElementById('mycanvas');
 
                         const context = canvas.getContext('2d');
@@ -307,23 +370,30 @@
                                     case 'TEMP':console.log('Not applicable');   
                                                 break;
                                     case 'GPSNN':
-                                                $('#com').val(' ');
+                                                
                                                 $('#baudrate').val('115200');
                                                 $('#parity').val('0');
                                                 $('#bytesize').val('8');
                                                 break;
                                     case 'DISTO':
-                                                $('#com').val(' ');
+                                                
                                                 $('#baudrate').val('9600');
                                                 $('#parity').val('0');
                                                 $('#bytesize').val('8');
                                                 break;
                                     case 'SYLVAC':
-                                                $('#com').val(' ');
+                                                
                                                 $('#baudrate').val('4800');
                                                 $('#parity').val('2');
                                                 $('#bytesize').val('7');
                                                 break;
+                                    case 'DXL':
+                                                
+                                                $('#baudrate').val('4800');
+                                                $('#parity').val('0');
+                                                $('#bytesize').val('8');
+                                                break;
+
                                     case 'NEVIL':console.log('Not applicable');
                                                 break;
                                     default:console.log('Not applicable');
@@ -353,6 +423,7 @@
                                     baudrate:$('#baudrate').val(),
                                     parity:$('#parity').val(),
                                     bytesize:$('#bytesize').val(),
+                                    isInternet: $('#isInternet').is(":checked")?1:0,
                                     csrfmiddlewaretoken:$("input[name='csrfmiddlewaretoken']").val()
 
                                 };
@@ -371,6 +442,9 @@
                                                         break;
                                             case "GPSNN":
                                                         displaySensor2();        
+                                                        break;
+                                            case "DXL":
+                                                        displaySensor4();
                                                         break;
                                             default: console.log('not available');
                                                         break;
@@ -397,6 +471,10 @@
                                                             displaySensor2();        
                                                         }, 1500); 
                                                         break;
+                                            case "DXL":
+                                                        dxlInterval=setInterval(() => {
+                                                            displaySensor4();
+                                                        }, 1500);
                                             default: console.log('not available');
                                                         break;
                                 }
