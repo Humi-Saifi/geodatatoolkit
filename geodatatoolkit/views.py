@@ -81,6 +81,44 @@ def ApiSensor4(request):
     return JsonResponse(all_data,safe=False)
 
 
+def ApiRemoteSensor1(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM disto")
+        all_data=dictfetchall(cursor)
+    #print(all_data)
+    #return render(request,"sensors.html",{})
+    return JsonResponse(all_data,safe=False)
+
+
+def ApiRemoteSensor2(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM gpsnn")
+        all_data=dictfetchall(cursor)
+    #print(all_data)
+    #return render(request,"sensors.html",{})    
+    return JsonResponse(all_data,safe=False)  
+
+def ApiRemoteSensor3(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM sensordata")
+        all_data=dictfetchall(cursor)
+    #print(all_data)
+    #return render(request,"sensors.html",{})
+    return JsonResponse(all_data,safe=False)
+
+def ApiRemoteSensor4(request):
+    all_data=None
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM disto")
+        all_data=dictfetchall(cursor)
+    #print(all_data)
+    return JsonResponse(all_data,safe=False)
+
+
+
 def getByteSize(bytesize):
     if bytesize==5:
         return serial.FIVEBITS
