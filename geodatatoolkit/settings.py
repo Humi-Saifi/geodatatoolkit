@@ -74,27 +74,27 @@ WSGI_APPLICATION = 'geodatatoolkit.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sensors',
-        'USER':'postgres',
-        'PASSWORD':'postgres',
-        'HOST':'localhost',
-         'PORT':'5432',
-    }
-}
-
 #DATABASES = {
 #    'default': {
 #        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'd4sboi6172opf9',
-#        'USER':'dssbcuwcqanxot',
-#        'PASSWORD':'47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e',
-#        'HOST':'ec2-54-246-89-234.eu-west-1.compute.amazonaws.com',
+#        'NAME': 'sensors',
+#        'USER':'postgres',
+#        'PASSWORD':'postgres',
+#        'HOST':'localhost',
 #         'PORT':'5432',
 #    }
 #}
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'd4sboi6172opf9',
+        'USER':'dssbcuwcqanxot',
+        'PASSWORD':'47e67cdfdb55aed7e79847bf4b7811c640c5835a49f80e102ea9434b7669e95e',
+        'HOST':'ec2-54-246-89-234.eu-west-1.compute.amazonaws.com',
+         'PORT':'5432',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
