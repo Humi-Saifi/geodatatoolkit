@@ -89,7 +89,7 @@
                                 </tr>  
                                 <tr>
                                     <td></td>
-                                    <td><input type="button" id="btn" value="submit" />&nbsp;<input type="button" id="deconnect" value="deconnect" /></td>
+                                    <td><input type="button" id="btn" value="submit" />&nbsp;<input type="button" id="deconnect" value="disconnect" /></td>
                                 </tr>                                                              
                             </table>
                         </form>
@@ -98,11 +98,34 @@
 
             </div>
             <div class="col">
+
                     <div class="card">
                         <div class="card-body">
                             <div id="chart-container" class="chart-container">
                                 <canvas id="mycanvas"></canvas>
                               </div>
+                              <div id="chart-info" class="chart-container">
+                                <table>
+                                    <tr><td>Median</td><td><span id="median1"></span></td></tr>
+                                    <tr><td>Average</td><td><span id="avg1"></span></td></tr>
+                                    
+                                </table>
+                              </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="chart-container2" class="chart-container">
+                                <canvas id="mycanvas2"></canvas>
+                            </div>
+                            <div id="chart-info2" class="chart-container">
+                                <table>
+                                    <tr><td>Median</td><td><span id="median2"></span></td></tr>
+                                    <tr><td>Average</td><td><span id="avg2"></span></td></tr>
+                                    
+                                </table>
+                            </div>                            
                         </div>
                     </div>
             </div>
@@ -117,19 +140,49 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script type="text/JavaScript">
-    var sylvacInterval=null;
+    var sylvacInterval=null; // foo is known to exist now but it has no type or value:
     var distoInterval=null;
     var gpsnnInterval=null;
     var dxlInterval=null;
-            $(document).ready(function(){
+             //ensures you are only working with elements that are actually there on your page, write all of your jQuery code inside the document ready function.
+            $(document).ready(function(){   
 
             function displaySensor1(){
                             $.get('/api/sensor/1').done(function(data){
                     console.log(data);
+                    if(data.error==true){
+                        alert('SENSOR NOT CONNECTED TO PORT PLEASE VERIFY');
+                        $('#chart-container').hide();
+                        $('#chart-container2').hide();
+                        $('#chart-info').hide();
+                        $('#chart-info2').hide();
+                        $('#median1').text("");
+                        $('#median2').text("");
+                        $('#avg1').text("");
+                        $('#avg2').text("");
+                        clearInterval(sylvacInterval);
+                        clearInterval(distoInterval);
+                        clearInterval(gpsnnInterval);
+                        clearInterval(dxlInterval);
+                        var canvas=document.getElementById('mycanvas');
+                        const context = canvas.getContext('2d');
+                        context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        var canvas2=document.getElementById('mycanvas2');
+                        const context2 = canvas2.getContext('2d');
+                        context2.clearRect(canvas2.width,canvas2.height, canvas2.width, canvas2.height);
+
+
+
+                    }else{
+
                     var dates=[];
                     var values=[];
+                    var sum=0.0;
+                    var clean_values=[];
                     for(var i=0;i<data.length;i++){
                         values.push(data[i].value);
+                        sum+=parseFloat(data[i].value);
+                        clean_values.push(parseFloat(data[i].value));
                         dates.push(data[i].date);    
                     }
 
@@ -154,7 +207,22 @@
                         type: 'line',
                         data: chartdata
                     });
+                    var avg=sum/clean_values.length;
+                    console.log("AVG:",avg);
+                    
+                    $('#avg1').text(avg.toString());
+                    clean_values.sort(function(a,b){
+                        if(a<b){
+                            return -1;
+                        }else{
+                            return 1;
+                        }
+                    });    
+                    $('#median1').text(clean_values[parseInt(clean_values.length/2)].toString());
+                    console.log('AVERAGE',clean_values[parseInt(clean_values.length/2)].toString());
                     $('#chart-container').show();
+                    $('#chart-info').show();
+            }
 
         }).fail(function(data){
                 console.log("ERROR");
@@ -166,12 +234,45 @@
         function displaySensor2(){
                             $.get('/api/sensor/2').done(function(data){
                     console.log(data);
+                    if(data.error==true){
+                        alert('SENSOR NOT CONNECTED TO PORT PLEASE VERIFY');
+                        $('#chart-container').hide();
+                        $('#chart-container2').hide();
+                        $('#chart-info').hide();
+                        $('#chart-info2').hide();
+                        $('#median1').text("");
+                        $('#median2').text("");
+                        $('#avg1').text("");
+                        $('#avg2').text("");
+                        clearInterval(sylvacInterval);
+                        clearInterval(distoInterval);
+                        clearInterval(gpsnnInterval);
+                        clearInterval(dxlInterval);
+                        var canvas=document.getElementById('mycanvas');
+                        const context = canvas.getContext('2d');
+                        context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        var canvas2=document.getElementById('mycanvas2');
+                        const context2 = canvas2.getContext('2d');
+                        context2.clearRect(canvas2.width,canvas2.height, canvas2.width, canvas2.height);
+
+
+
+                    }else{
+
                     var dates=[];
                     var widths=[];
                     var lengths=[];
                     var gpstimes=[];
+                    var sum=0.0;
+                    var sum2=0.0;
+                    var clean_values=[];
+                    var clean_values2=[];
                     for(var i=0;i<data.length;i++){
                         widths.push(data[i].wide);
+                        sum+=parseFloat(data[i].wide);
+                        sum2+=parseFloat(data[i].lenght);
+                        clean_values.push(data[i].wide);
+                        clean_values2.push(data[i].lenght);
                         lengths.push(data[i].lenght);
                         gpstimes.push(data[i].GPStime);
                         dates.push(data[i].date);    
@@ -180,7 +281,7 @@
                     var chartdata={
                         labels:dates,
                         datasets:[
-                        {
+                        /*{
                                     label:"GPS time",
                                     fill: true,
                                     lineTension: 0.1,
@@ -189,7 +290,7 @@
                                     pointHoverBackgroundColor: "rgba(211, 72, 54, 1)",
                                     pointHoverBorderColor: "rgba(211, 72, 54, 1)",
                                     data: gpstimes
-                                },
+                                },*/
                                 {
                                     label:"width",
                                     fill: false,
@@ -199,8 +300,14 @@
                                     pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
                                     pointHoverBorderColor: "rgba(59, 89, 152, 1)",
                                     data: widths
-                                },
-                                {
+                                }
+                                                           
+                        ]
+                    };
+                    var chartdata2={
+                        labels:dates,
+                        datasets:[
+                            {
                                     label:"length",
                                     fill: false,
                                     lineTension: 0.1,
@@ -210,16 +317,48 @@
                                     pointHoverBorderColor: "rgba(29, 202, 255, 1)",
                                     data: lengths
                                 }
-                             
-                        ]
+ 
+                            ]
                     };
                     var ctx = $("#mycanvas");
-
+                    var ctx2 = $("#mycanvas2");
                     var LineGraph = new Chart(ctx, {
                         type: 'line',
                         data: chartdata
                     });
+                    var LineGraph2=new Chart(ctx2, {
+                        type:'line',
+                        data: chartdata2
+                    });
+                    var avg=sum/clean_values.length;
+                    var avg2=sum2/clean_values2.length;
+                    console.log("AVG 1:",avg);
+                    console.log("AVG 2:",avg2);
+                    $('avg1').text(avg.toString());
+                    $('avg2').text(avg2.toString());
+                    clean_values.sort(function(a,b){
+                        if(a<b){
+                            return -1;
+                        }else{
+                            return 1;
+                        }
+                    });    
+                    clean_values2.sort(function(a,b){
+                        if(a<b){
+                            return -1;
+                        }else{
+                            return 1;
+                        }
+                    });    
+                    $('median1').text(clean_values[parseInt(clean_values.length/2)].toString());
+                    $('median2').text(clean_values2[parseInt(clean_values2.length/2)].toString());
+                    console.log('MEDIAN 1',clean_values[parseInt(clean_values.length/2)].toString());
+                    console.log('MEDIAN 2',clean_values2[parseInt(clean_values2.length/2)].toString());
                     $('#chart-container').show();
+                    $('#chart-container2').show();
+                    $('#chart-info').show();
+                    $('#chart-info2').show();
+            }
 
         }).fail(function(data){
                 console.log("ERROR");
@@ -227,14 +366,45 @@
             });
 
         }
+        
 
         function displaySensor3(){
                             $.get('/api/sensor/3').done(function(data){
+                    
                     console.log(data);
+                    if(data.error==true){
+                        alert('SENSOR NOT CONNECTED TO PORT PLEASE VERIFY');
+                        $('#chart-container').hide();
+                        $('#chart-container2').hide();
+                        $('#chart-info').hide();
+                        $('#chart-info2').hide();
+                        $('#median1').text("");
+                        $('#median2').text("");
+                        $('#avg1').text("");
+                        $('#avg2').text("");
+                        clearInterval(sylvacInterval);
+                        clearInterval(distoInterval);
+                        clearInterval(gpsnnInterval);
+                        clearInterval(dxlInterval);
+                        var canvas=document.getElementById('mycanvas');
+                        const context = canvas.getContext('2d');
+                        context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        var canvas2=document.getElementById('mycanvas2');
+                        const context2 = canvas2.getContext('2d');
+                        context2.clearRect(canvas2.width,canvas2.height, canvas2.width, canvas2.height);
+
+
+
+                    }else{
+
                     var dates=[];
                     var values=[];
+                    var sum=0.0;
+                    var clean_values=[];
                     for(var i=0;i<data.length;i++){
                         values.push(data[i].value);
+                        sum+=parseFloat(data[i].value);
+                        clean_values.push(parseFloat(data[i].value));
                         dates.push(data[i].date);    
                     }
 
@@ -260,7 +430,23 @@
                         type: 'line',
                         data: chartdata
                     });
+                    var median=sum/parseFloat(clean_values.length);
+                    console.log("MEDIAN:",median);
+                    
+                    $('avg1').text(median.toString());
+                    clean_values.sort(function(a,b){
+                        if(a<b){
+                            return -1;
+                        }else{
+                            return 1;
+                        }
+                    });    
+                    console.log(clean_values);
+                    $('median1').text(clean_values[parseInt(clean_values.length/2)].toString());
+                    console.log('AVERAGE',clean_values[parseInt(clean_values.length/2)].toString());
                     $('#chart-container').show();
+                    $('#chart-info').show();
+            }
 
         }).fail(function(data){
                 console.log("ERROR");
@@ -273,6 +459,31 @@
         function displaySensor4(){
                             $.get('/api/sensor/4').done(function(data){
                     console.log(data);
+                    if(data.error==true){
+                        alert('SENSOR NOT CONNECTED TO PORT PLEASE VERIFY');
+                        $('#chart-container').hide();
+                        $('#chart-container2').hide();
+                        $('#chart-info').hide();
+                        $('#chart-info2').hide();
+                        $('#median1').text("");
+                        $('#median2').text("");
+                        $('#avg1').text("");
+                        $('#avg2').text("");
+                        clearInterval(sylvacInterval);
+                        clearInterval(distoInterval);
+                        clearInterval(gpsnnInterval);
+                        clearInterval(dxlInterval);
+                        var canvas=document.getElementById('mycanvas');
+                        const context = canvas.getContext('2d');
+                        context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        var canvas2=document.getElementById('mycanvas2');
+                        const context2 = canvas2.getContext('2d');
+                        context2.clearRect(canvas2.width,canvas2.height, canvas2.width, canvas2.height);
+
+
+
+                    }else{
+
                     var dates=[];
                     var xs=[];
                     var ys=[];
@@ -288,18 +499,24 @@
                         datasets:[
                         {
                                     label:"X",
-                                    fill: true,
+                                    fill: false,
                                     lineTension: 0.1,
                                     backgroundColor: "rgba(211, 72, 54, 0.75)",
                                     borderColor: "rgba(211, 72, 54, 1)",
                                     pointHoverBackgroundColor: "rgba(211, 72, 54, 1)",
                                     pointHoverBorderColor: "rgba(211, 72, 54, 1)",
                                     data: xs
-                                },
+                                }
+                             
+                        ]
+                    };
+                    var chartdata2={
+                        labels:dates,
+                        datasets:[
                                 {
                                     label:"Y",
                                     fill: false,
-                                    lineTension: 0.1,
+                                    
                                     backgroundColor: "rgba(59, 89, 152, 0.75)",
                                     borderColor: "rgba(59, 89, 152, 1)",
                                     pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
@@ -310,12 +527,18 @@
                         ]
                     };
                     var ctx = $("#mycanvas");
-
+                    var ctx2 = $("#mycanvas2");
                     var LineGraph = new Chart(ctx, {
                         type: 'line',
                         data: chartdata
                     });
+                    var LineGraph2 = new Chart(ctx2, {
+                        type: 'line',
+                        data: chartdata2
+                    });                    
                     $('#chart-container').show();
+                    $('#chart-container2').show();
+            }
 
         }).fail(function(data){
                 console.log("ERROR");
@@ -348,15 +571,23 @@
                             console.log(err);
                         });
                         $('#chart-container').hide();
+                        $('#chart-container2').hide();
+                        $('#chart-info').hide();
+                        $('#chart-info2').hide();
+                        $('#median1').text("");
+                        $('#median2').text("");
+                        $('#avg1').text("");
+                        $('#avg2').text("");
                         clearInterval(sylvacInterval);
                         clearInterval(distoInterval);
                         clearInterval(gpsnnInterval);
                         clearInterval(dxlInterval);
                         var canvas=document.getElementById('mycanvas');
-
                         const context = canvas.getContext('2d');
-
                         context.clearRect(canvas.width,canvas.height, canvas.width, canvas.height);
+                        var canvas2=document.getElementById('mycanvas2');
+                        const context2 = canvas2.getContext('2d');
+                        context2.clearRect(canvas2.width,canvas2.height, canvas2.width, canvas2.height);
                         location.reload();
                     });
 

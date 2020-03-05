@@ -104,7 +104,7 @@
         //var $j = jQuery.noConflict();
         
         function RemoteApiSensor1(){
-        $.get('/api/remote/sensor/1').done(function(data){
+        $.get('/api/local/sensor/1').done(function(data){
                     console.log(data);
                     var dates=[];
                     var values=[];
@@ -142,7 +142,7 @@
         }
 
         function RemoteApiSensor2(){
-            $.get('/api/remote/sensor/2').done(function(data){
+            $.get('/api/local/sensor/2').done(function(data){
                     console.log(data);
                     var dates=[];
                     var widths=[];
@@ -223,7 +223,7 @@
         }
 
         function RemoteApiSensor3(){
-        $.get('/api/remote/sensor/3').done(function(data){
+        $.get('/api/local/sensor/3').done(function(data){
                     console.log(data);
                     var dates=[];
                     var values=[];
@@ -261,7 +261,7 @@
         }
 
         function RemoteApiSensor4(){
-                            $.get('/api/remote/sensor/4').done(function(data){
+                            $.get('/api/local/sensor/4').done(function(data){
                     console.log(data);
 
 
